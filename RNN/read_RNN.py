@@ -1,11 +1,13 @@
 import os
+import use_dict 
 
-def read_RNN(inpu,output, n):
+def read_RNN(inpu,output):
     org_tmp = []
     write_tmp = []
     score_index = []
     output_tmp = []
     index_end = []
+    output_tmp = []
     print "Preprocessing input datas..."
     with open (inpu, 'r') as result:
         lines = result.readlines()
@@ -16,6 +18,7 @@ def read_RNN(inpu,output, n):
                 header_value += 1
                 continue
             write_tmp.append(str(header_value)+" "+line.upper())
+            org_tmp.append(line)
         result.close()
     with open ("rnn_input", 'w') as rnnfile:
         for content in write_tmp:
@@ -37,21 +40,23 @@ def read_RNN(inpu,output, n):
                 tmp_value = float(line)
                 tmp_index = index
             if index in index_end:
-                print "index = ",tmp_index
-                print "value = ",tmp_value
                 score_index.append(tmp_index)
         rnnfile.close()
     for index in score_index:
-        output_tmp.append(write_tmp[index][2:])
+        output_tmp.append(org_tmp[index].lower())
     print "Selecting best sentace..."
+    with open ("rnn_result", 'w') as rnn_result_file:
+        for content in output_tmp:
+            rnn_result_file.write(content)
+        rnn_result_file.close()
+
     with open (output, 'w') as outputfile:
         for content in output_tmp:
-            outputfile.write(content)
+            outputfile.write(use_dict.use_dict(content)+"\n")
         outputfile.close()
 
 def main():
-    n = 50
-    read_RNN("gb","file", 50)
+    read_RNN("gb","file")
 
 if __name__ == "__main__":
     main()
