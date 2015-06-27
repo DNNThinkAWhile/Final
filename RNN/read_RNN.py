@@ -51,7 +51,7 @@ def read_RNN(inpu,output, n):
 
 def main():
     n = 50
-    read_RNN("gb","file", 50)
+    read_RNN("../gb","file", 50)
 
 if __name__ == "__main__":
     main()
