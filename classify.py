@@ -11,41 +11,54 @@ BATCH = 256
 LABEL_FILE = 'MLDS_HW1_RELEASE_v1/label/train.lab'
 MAP_FILE = 'MLDS_HW1_RELEASE_v1/phones/48_idx_chr.map'
 
+
 def main(argv):
 
-    if len(argv) < 2:
-        print 'classify.py _iter_10000.caffemodel'
+    if len(argv) < 3:
+        print 'classify.py predict.prototxt _iter_10000.caffemodel'
         exit(-1)
-    pretrained = argv[1]
+    model_file = argv[1]
+    pretrained = argv[2]
 
     spchid_phone_map, d_index_phone, d_phone_index, d_phone_alphabet  = prepare_data.read_map(LABEL_FILE, MAP_FILE)
 
-    caffe.set_mode_gpu()
-    net = caffe.Classifier(MODEL_FILE, pretrained,raw_scale=1, image_dims=(1, FEAT_NUM))
-
-
 
     #input : iterable : (H x W x K)
-    (spids, xs)  = read_data(INPUT_FILE, count=40960)
-    ys = [int(spchid_phone_map[spid]) for spid in spids]
-    sum_pred = 0
-    sum_correct = 0
-    for i in xrange(len(ys) / BATCH):
-        ys_part = ys[i*BATCH: i*BATCH + BATCH]
+    (spids, xs)  = read_data(INPUT_FILE, count=8192)
+    ys = [int(spchid_phone_map[spid]) if spid in spchid_phone_map else -1 \
+            for spid in spids]
+    preds = classify(model_file, pretrained, xs, ys)
+
+    preds_cnt = len(preds)
+    correct_cnt = \
+            sum([1 if prob.argmax() == y else 0 \
+                    for (prob, y) in zip(preds, ys)])
+
+    print 'predicted:', preds_cnt
+    print 'correct:', correct_cnt
+    print 'acc:', float(correct_cnt) / preds_cnt
+
+
+def classify(model_file, pretrained, xs, ys):
+    caffe.set_mode_gpu()
+    net = caffe.Classifier(model_file, pretrained,raw_scale=1, image_dims=(1, FEAT_NUM))
+
+    preds = []
+
+    for i in xrange((len(xs) + BATCH - 1) / BATCH):
         xs_part = xs[i*BATCH: i*BATCH + BATCH]
-        pred = net.predict(xs_part,oversample=False)
+        pred = net.predict(xs_part, oversample=False)
+
+        # for (prob, y) in zip(pred, ys_part):
+        #     print y, prob
+
         #print 'prediction shape:', pred[0].shape
         #print 'pred class:', pred[0].argmax()
-        sum_pred += BATCH
-        sum_correct += \
-                sum([1 if prob.argmax() == y else 0 \
-                        for (prob, y) in zip(pred, ys_part)])
-        print 'ys_part:',ys_part
-        print 'pred:', [prob.argmax() for prob in pred]
+        print 'y:', ys[i*BATCH: i*BATCH + BATCH]
+        print 'pred:', pred
+        preds.extend(pred)
 
-    print 'predicted:', sum_pred
-    print 'correct:', sum_correct
-    print 'acc:', float(sum_correct) / float(sum_pred)
+    return preds
 
 
 def read_data(in_file, count=-1):
