@@ -49,10 +49,10 @@ def read_RNN(inpu,output):
         for content in output_tmp:
             rnn_result_file.write(content)
         rnn_result_file.close()
-
+    my_dict = use_dict.make_dict()
     with open (output, 'w') as outputfile:
         for content in output_tmp:
-            outputfile.write(use_dict.use_dict(content)+"\n")
+            outputfile.write(use_dict.use_dict(my_dict, content)+"\n")
         outputfile.close()
 
 def main():
