@@ -1,5 +1,6 @@
 import os
 import use_dict 
+import csv
 
 def read_RNN(inpu,output):
     org_tmp = []
@@ -50,13 +51,16 @@ def read_RNN(inpu,output):
             rnn_result_file.write(content)
         rnn_result_file.close()
     my_dict = use_dict.make_dict()
+    speech_id = open ('final_speechID.txt', 'r').readlines()
     with open (output, 'w') as outputfile:
-        for content in output_tmp:
-            outputfile.write(use_dict.use_dict(my_dict, content)+"\n")
-        outputfile.close()
+        writer = csv.writer(outputfile)
+        writer.writerow(['id','sequence'])
+        for i in range(len(output_tmp)):
+            writer.writerow([speech_id[i].strip('\n'), use_dict.use_dict(my_dict, output_tmp[i])])
+        #outputfile.close()
 
 def main():
-    read_RNN("gb","file")
+    read_RNN("../gb","kaggle.csv")
 
 if __name__ == "__main__":
     main()
